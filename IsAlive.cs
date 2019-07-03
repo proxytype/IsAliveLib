@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
@@ -28,22 +29,40 @@ namespace IsAliveLib
         }
 
 
-        public bool check(IPAddress address, int port, NETWORK_PROTOCOL protocol)
+        public IsAlivePayload check(IPAddress address, int port, NETWORK_PROTOCOL protocol)
         {
+            IsAlivePayload payload = new IsAlivePayload();
+            payload.host = address;
+            payload.port = port;
+            payload.protocol = protocol;
+
+            Stopwatch watch = new Stopwatch();
+            watch.Start();
+
             switch (protocol)
             {
                 case NETWORK_PROTOCOL.TCP:
-                    return isAliveTCP(address, port);
+                    isAliveTCP(ref payload);
+                    break;
                 case NETWORK_PROTOCOL.UDP:
-                    return isAliveUDP(address, port);
+                    isAliveUDP(ref payload);
+                    break;
                 case NETWORK_PROTOCOL.ICMP:
-                    return isAliveICMP(address);
+                    isAliveICMP(ref payload);
+                    break;
                 default:
-                    return false;
+                    payload.errorMessage = "Unsupported Protocol";
+                    break;
             }
+
+            watch.Stop();
+
+            payload.totalTime = watch.Elapsed;
+
+            return payload;
         }
 
-        private bool isAliveTCP(IPAddress address, int port)
+        private void isAliveTCP(ref IsAlivePayload payload)
         {
             TcpClient myclient = new TcpClient();
 
@@ -52,12 +71,18 @@ namespace IsAliveLib
 
             try
             {
-                myclient.Connect(address, port);
-                return true;
+                if (!myclient.ConnectAsync(payload.host, payload.port).Wait(_timeOut)) {
+                    payload.errorMessage = "Timeout";
+                }
+                else
+                {
+                    payload.success = true;
+                }
+                
             }
             catch (Exception ex)
             {
-                return false;
+                payload.errorMessage = ex.ToString();
             }
             finally
             {
@@ -66,7 +91,7 @@ namespace IsAliveLib
 
         }
 
-        private bool isAliveUDP(IPAddress ip, int port)
+        private void isAliveUDP(ref IsAlivePayload payload)
         {
 
             UdpClient myclient = new UdpClient();
@@ -76,7 +101,7 @@ namespace IsAliveLib
                 myclient.Client.SendTimeout = _timeOut;
                 myclient.Client.ReceiveTimeout = _timeOut;
 
-                myclient.Connect(ip, port);
+                myclient.Connect(payload.host, payload.port);
                 Byte[] sendBytes = Encoding.ASCII.GetBytes("Is anybody there");
 
                 int count = myclient.Send(sendBytes, sendBytes.Length);
@@ -88,15 +113,15 @@ namespace IsAliveLib
 
                 if (returnData.Length != 0)
                 {
-                    return true;
+                    payload.success = true;
                 }
                 else {
-                    return false;
+                    payload.errorMessage = "Package Sent No Message Received";
                 }
             }
             catch (Exception ex)
             {
-                return false;
+                payload.errorMessage = ex.ToString();
             }
             finally
             {
@@ -105,31 +130,30 @@ namespace IsAliveLib
 
         }
 
-        private bool isAliveICMP(IPAddress address)
+        private void isAliveICMP(ref IsAlivePayload payload)
         {
             Ping myping = new Ping();
             try
             {
-                PingReply replay = myping.Send(address, 2000);
+                PingReply replay = myping.Send(payload.host, 2000);
 
                 if (replay == null)
                 {
-                    return false;
+                    payload.errorMessage = "Replay Empty";
                 }
                 else if (replay.Status == IPStatus.Success)
                 {
-                    return true;
+                    payload.success = true;
                 }
                 else
                 {
-                    return false;
+                    payload.errorMessage = replay.Status.ToString();
                 }
 
             }
             catch (Exception ex)
             {
-
-                return false;
+                payload.errorMessage = ex.ToString();
             }
 
         }
