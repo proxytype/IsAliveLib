@@ -5,27 +5,29 @@ Simple library for checking network services are availability on remote host, su
 
 This Library can help monitor remote network services by checking connectivity of ports and ip address, it's support 3 main protocols: ICMP as ping, TCP and UDP (must receive some data for confirmation).
 
+Usage:
+
 ```c#
 static void Main(string[] args)
-        {
+{
+     IsAlive isAlive = new IsAlive(3000);
 
-            IsAlive isAlive = new IsAlive(3000);
+     IPAddress address = IPAddress.Parse("8.8.8.8");
 
-            IPAddress address = IPAddress.Parse("8.8.8.8");
+     IsAlivePayload payload = isAlive.check(address, 0, IsAlive.NETWORK_PROTOCOL.ICMP);
+     print(payload);
 
-            IsAlivePayload payload = isAlive.check(address, 0, IsAlive.NETWORK_PROTOCOL.ICMP);
-            print(payload);
+     payload = isAlive.check(address, 80, IsAlive.NETWORK_PROTOCOL.TCP);
+     print(payload);
 
-            payload = isAlive.check(address, 80, IsAlive.NETWORK_PROTOCOL.TCP);
-            print(payload);
+     payload = isAlive.check(address, 80, IsAlive.NETWORK_PROTOCOL.UDP);
+     print(payload);
 
-            payload = isAlive.check(address, 80, IsAlive.NETWORK_PROTOCOL.UDP);
-            print(payload);
+     Console.ReadLine();
+}
 
-            Console.ReadLine();
-        }
-
-        static void print(IsAlivePayload payload) {
-            Console.WriteLine("Response - " + payload.host.ToString() + ":" + payload.port.ToString() + " " + payload.protocol.ToString() + " ->" + payload.success.ToString());
-        }
+static void print(IsAlivePayload payload) {
+     Console.WriteLine("Response - " + payload.host.ToString() 
+     + ":" + payload.port.ToString() + " " + payload.protocol.ToString() + " ->" + payload.success.ToString());
+}
 ```
