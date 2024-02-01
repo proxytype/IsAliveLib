@@ -1,9 +1,7 @@
 # IsAlive
-Simple library for checking if network services avialable on remote host, support ICMP (Ping), TCP, UDP
+Introducing a versatile library for monitoring remote network services, capable of checking connectivity across ports and IP addresses. This robust solution supports three key protocols: ICMP for ping functionality, TCP, and UDP (requiring data reception for confirmation). This library empowers you to efficiently monitor the health and connectivity of remote network services, ensuring a reliable and comprehensive approach to network monitoring. Integrate seamlessly to enhance your application's capabilities in assessing and maintaining remote service connections.
 
 ![alt text](https://github.com/proxytype/IsAliveLib/blob/master/isAlive1.gif)
-
-This Library can help monitor remote network services by checking connectivity of ports and ip address, it's support 3 main protocols: ICMP as ping, TCP and UDP (must receive some data for confirmation).
 
 Usage:
 
